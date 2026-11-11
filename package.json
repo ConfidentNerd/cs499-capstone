@@ -1,0 +1,23 @@
+{
+  "name": "weight-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "hono": "^4.13.17",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "prettier": "3.9.10",
+    "typescript": "^7.0.2"
+  }
+}

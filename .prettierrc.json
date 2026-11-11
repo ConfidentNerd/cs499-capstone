@@ -1,0 +1,11 @@
+{
+    "printWidth": 120,
+    "tabWidth": 4,
+    "endOfLine": "crlf",
+    "overrides": [
+        {
+            "files": ["package.json", "tsconfig.json"],
+            "options": { "tabWidth": 2 }
+        }
+    ]
+}
