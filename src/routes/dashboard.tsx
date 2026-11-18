@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import * as v from "valibot";
 import { addEntry, getGoal, listEntries } from "../db/database";
 import { getProgressPercent, hasReachedGoal } from "../lib/progress";
+import { getMovingAverages, getProjectedGoalDate, getWeeklyTrend } from "../lib/stats";
 import { getCurrentUser, requireUser } from "../middleware/session";
 import type { AppEnv, Goal, User } from "../types";
 import { entrySchema, type FieldErrors, getFieldErrors } from "../validation/schemas";
@@ -17,14 +18,27 @@ function buildDashboard(db: Database, user: User, goal: Goal, errors?: FieldErro
     let currentWeight = goal.startWeight;
     if (latestEntry) currentWeight = latestEntry.weight;
 
+    // the table shows newest first but the algorithms needs oldest first
+    const oldestFirst = [...entries].reverse();
+    const movingAverages = getMovingAverages(oldestFirst).reverse();
+    const weeklyTrend = getWeeklyTrend(oldestFirst);
+
+    let projectedDate: number | null = null;
+    if (latestEntry) {
+        projectedDate = getProjectedGoalDate(currentWeight, goal.goalWeight, weeklyTrend, latestEntry.recordedAt);
+    }
+
     return (
         <DashboardPage
             user={user}
             goal={goal}
             entries={entries}
+            movingAverages={movingAverages}
             currentWeight={currentWeight}
             progressPercent={getProgressPercent(goal.startWeight, currentWeight, goal.goalWeight)}
             goalReached={hasReachedGoal(goal.startWeight, currentWeight, goal.goalWeight)}
+            weeklyTrend={weeklyTrend}
+            projectedDate={projectedDate}
             errors={errors}
         />
     );

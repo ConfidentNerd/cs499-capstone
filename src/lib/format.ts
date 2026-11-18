@@ -16,3 +16,8 @@ export function formatDateTime(milliseconds: number): string {
     const minutes = twoDigits(date.getMinutes());
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
+
+export function formatDate(milliseconds: number): string {
+    const date = new Date(milliseconds);
+    return `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}`;
+}

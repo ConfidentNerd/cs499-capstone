@@ -1,4 +1,4 @@
-import { formatDateTime, formatWeight } from "../lib/format";
+import { formatDate, formatDateTime, formatWeight } from "../lib/format";
 import type { Goal, User, WeightEntry } from "../types";
 import type { FieldErrors } from "../validation/schemas";
 import { Field } from "./components";
@@ -8,9 +8,12 @@ type DashboardPageProps = {
     user: User;
     goal: Goal;
     entries: WeightEntry[];
+    movingAverages: number[];
     currentWeight: number;
     progressPercent: number;
     goalReached: boolean;
+    weeklyTrend: number | null;
+    projectedDate: number | null;
     errors?: FieldErrors;
 };
 
@@ -36,6 +39,7 @@ export default function DashboardPage(props: DashboardPageProps) {
                     {props.progressPercent}% of the way from {formatWeight(goal.startWeight)} ·{" "}
                     <a href="/goal">Edit goal</a>
                 </p>
+                <Trend weeklyTrend={props.weeklyTrend} projectedDate={props.projectedDate} goal={goal} />
             </section>
 
             <hr />
@@ -49,12 +53,31 @@ export default function DashboardPage(props: DashboardPageProps) {
             <hr />
 
             <h2>Recent Entries</h2>
-            {entries.length === 0 ? <p class="muted">No entries yet.</p> : <EntriesTable entries={entries} />}
+            {entries.length === 0 ? (
+                <p class="muted">No entries yet.</p>
+            ) : (
+                <EntriesTable entries={entries} movingAverages={props.movingAverages} />
+            )}
         </Layout>
     );
 }
 
-function EntriesTable(props: { entries: WeightEntry[] }) {
+function Trend(props: { weeklyTrend: number | null; projectedDate: number | null; goal: Goal }) {
+    if (props.weeklyTrend === null) return <p class="muted small">Log at least a week of entries to see your trend.</p>;
+
+    // + for gaining, toFixed already adds the - for losing
+    const trend = (props.weeklyTrend > 0 ? "+" : "") + formatWeight(props.weeklyTrend);
+
+    return (
+        <p class="muted small">
+            Trend: {trend} per week (last 4 weeks)
+            {props.projectedDate !== null &&
+                ` · On pace to reach ${formatWeight(props.goal.goalWeight)} around ${formatDate(props.projectedDate)}`}
+        </p>
+    );
+}
+
+function EntriesTable(props: { entries: WeightEntry[]; movingAverages: number[] }) {
     return (
         <div class="table-wrapper">
             <table>
@@ -62,14 +85,16 @@ function EntriesTable(props: { entries: WeightEntry[] }) {
                     <tr>
                         <th>Date</th>
                         <th>Weight</th>
+                        <th>7-day avg</th>
                         <th class="actions-column">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {props.entries.map((entry) => (
+                    {props.entries.map((entry, i) => (
                         <tr>
                             <td>{formatDateTime(entry.recordedAt)}</td>
                             <td>{formatWeight(entry.weight)}</td>
+                            <td>{formatWeight(props.movingAverages[i] ?? entry.weight)}</td>
                             <td class="actions-column">
                                 <a class="small-button" href={`/entries/${entry.id}/edit`}>
                                     Edit
