@@ -8,6 +8,8 @@ export function createDatabase(path: string): Database {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
 
     const db = new Database(path, { create: true });
+    // sqlite has foreign keys off by default
+    db.exec("PRAGMA foreign_keys = ON");
 
     const schema = readFileSync(join(import.meta.dir, "schema.sql"), "utf8");
     db.exec(schema);
@@ -45,6 +47,10 @@ export function findUserBySession(db: Database, token: string, now: number): Use
          WHERE sessions.token = ? AND sessions.expires_at > ?`,
     );
     return query.get(token, now);
+}
+
+export function deleteSession(db: Database, token: string): void {
+    db.query("DELETE FROM sessions WHERE token = ?").run(token);
 }
 
 export function getGoal(db: Database, userId: number): Goal | null {
