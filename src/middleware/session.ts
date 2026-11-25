@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { createSession, findUserBySession } from "../db/database";
+import { createSession, deleteSession, findUserBySession } from "../db/database";
 import type { AppEnv, User } from "../types";
 
 const COOKIE_NAME = "session";
@@ -21,6 +21,9 @@ export function startSession(c: Context<AppEnv>, userId: number): void {
 }
 
 export function endSession(c: Context<AppEnv>): void {
+    const token = getCookie(c, COOKIE_NAME);
+    if (token) deleteSession(c.get("db"), token);
+
     deleteCookie(c, COOKIE_NAME, { path: "/" });
 }
 

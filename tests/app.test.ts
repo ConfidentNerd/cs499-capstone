@@ -1,7 +1,7 @@
 import type { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, test } from "bun:test";
 import { createApp } from "../src/app";
-import { createDatabase } from "../src/db/database";
+import { createDatabase, createUser } from "../src/db/database";
 
 let db: Database;
 let app: ReturnType<typeof createApp>;
@@ -53,6 +53,11 @@ describe("accounts and sessions", () => {
         expect(row.password_hash).not.toBe("password123");
     });
 
+    test("usernames are unique in the DB too", () => {
+        createUser(db, "alice", "hash");
+        expect(() => createUser(db, "alice", "hash")).toThrow();
+    });
+
     test("a wrong password shows an error", async () => {
         await signUp("alice");
         const response = await post("/login", { username: "alice", password: "wrong-password" });
@@ -60,11 +65,12 @@ describe("accounts and sessions", () => {
         expect(await response.text()).toContain("Wrong password");
     });
 
-    test("logout clears the session cookie", async () => {
+    test("logout ends the session", async () => {
         const cookie = await signUp("alice");
         const response = await post("/logout", {}, cookie);
         expect(response.headers.get("location")).toBe("/login");
         expect(response.headers.get("set-cookie")).toContain("session=;");
+        expect((await get("/", cookie)).headers.get("location")).toBe("/login");
     });
 });
 
